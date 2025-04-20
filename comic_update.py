@@ -1,5 +1,7 @@
 import os
 import requests
+from tabulate import tabulate
+import wcwidth
 from bs4 import BeautifulSoup
 
 db_file = "./file_update.txt"
@@ -38,20 +40,28 @@ def fetch_last_modified(url):
         
         return "Unknown"
     except requests.RequestException:
+        print (requests.RequestException)
         return "ERROR"
 
 def main():
     urls_data = load_urls()
     new_data = {}
     changed_urls = []
+    table_header = ['title', 'origin', 'fetched','status']
+    table_data=[]
     
     for url, info in urls_data.items():
         new_date = fetch_last_modified(url)
+        state=""
         if new_date != "ERROR":
             new_data[url] = {"title": info["title"], "date": new_date}
             if info["date"] != new_date:
+                state="NEW"
                 changed_urls.append((info["title"], url))
-    
+            else:
+               state="" 
+        table_data.append((info["title"],info["date"],new_date,state) )
+    print(tabulate(table_data, headers=table_header, tablefmt='grid'))
     save_urls(new_data)
     
     if changed_urls:
